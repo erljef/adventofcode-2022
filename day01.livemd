@@ -1,0 +1,95 @@
+# Advent of code 2022 - Day 1
+
+## Description
+
+[Calorie Counting](https://adventofcode.com/2022/day/1)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/day01.txt")
+    |> String.split("\n")
+  end
+end
+```
+
+```elixir
+defmodule Part1 do
+  def calories_by_group(input) do
+    input
+    |> Enum.chunk_while(
+      [],
+      fn item, acc ->
+        case item do
+          "" -> {:cont, [item | acc], []}
+          _ -> {:cont, [item | acc]}
+        end
+      end,
+      fn acc ->
+        {:cont, acc, []}
+      end
+    )
+    |> Enum.map(fn list -> Enum.filter(list, &(&1 != "")) end)
+    |> Enum.filter(&(&1 != []))
+    |> Enum.map(fn list -> Enum.map(list, &String.to_integer/1) end)
+    |> Enum.map(&Enum.sum/1)
+  end
+
+  def max_calories(input) do
+    calories_by_group(input)
+    |> Enum.max()
+  end
+end
+
+Part1.max_calories(Load.input())
+```
+
+```elixir
+defmodule Part2 do
+  def top_3_calories(calories_by_group) do
+    calories_by_group
+    |> Enum.sort()
+    |> Enum.reverse()
+    |> Enum.take(3)
+    |> Enum.sum()
+  end
+end
+
+Load.input() |> Part1.calories_by_group() |> Part2.top_3_calories()
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  @input """
+         1000
+         2000
+         3000
+
+         4000
+
+         5000
+         6000
+
+         7000
+         8000
+         9000
+
+         10000
+         """
+         |> String.split("\n")
+
+  test "max calories" do
+    assert Part1.max_calories(@input) == 24000
+  end
+
+  test "top 3 total calories" do
+    assert @input |> Part1.calories_by_group() |> Part2.top_3_calories() == 45000
+  end
+end
+
+ExUnit.run()
+```
