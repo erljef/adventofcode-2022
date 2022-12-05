@@ -9,6 +9,7 @@ defmodule Load do
   def input do
     File.read!("#{__DIR__}/inputs/x.txt")
     |> String.split("\n")
+    |> Enum.filter(&(&1 != ""))
   end
 end
 ```
