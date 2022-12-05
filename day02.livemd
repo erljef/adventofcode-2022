@@ -1,0 +1,98 @@
+# Advent of code 2022 - Day 2
+
+## Description
+
+[Rock Paper Scissors](https://adventofcode.com/2022/day/2)
+
+<!-- livebook:{"break_markdown":true} -->
+
+[](https://adventofcode.com/2022/day/)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/day02.txt")
+    |> String.split("\n")
+  end
+end
+```
+
+```elixir
+defmodule Day2 do
+  @moves %{"A" => 1, "B" => 2, "C" => 3, "X" => 1, "Y" => 2, "Z" => 3}
+  @score %{lose: 0, draw: 3, win: 6}
+  @result %{"X" => :lose, "Y" => :draw, "Z" => :win}
+
+  def part1(input) do
+    total_score(input, &score_part1/1)
+  end
+
+  def part2(input) do
+    total_score(input, &score_part2/1)
+  end
+
+  def total_score(input, score_calc) do
+    input
+    |> Enum.filter(&(&1 != ""))
+    |> Enum.map(fn row -> String.split(row, " ") |> List.to_tuple() end)
+    |> Enum.map(&score_calc.(&1))
+    |> Enum.sum()
+  end
+
+  def score_part1({_opponent, you} = round) do
+    Map.get(@score, result(round)) + Map.get(@moves, you)
+  end
+
+  def score_part2({opponent, you}) do
+    result = Map.get(@result, you)
+    Map.get(@score, result) + move_by_result(result, opponent)
+  end
+
+  def move_by_result(result, opponent) do
+    move = Map.get(@moves, opponent)
+
+    case result do
+      :win -> rem(move, 3) + 1
+      :lose -> rem(move - 1 + 2, 3) + 1
+      :draw -> move
+    end
+  end
+
+  def result({"A", "X"}), do: :draw
+  def result({"A", "Y"}), do: :win
+  def result({"A", "Z"}), do: :lose
+  def result({"B", "X"}), do: :lose
+  def result({"B", "Y"}), do: :draw
+  def result({"B", "Z"}), do: :win
+  def result({"C", "X"}), do: :win
+  def result({"C", "Y"}), do: :lose
+  def result({"C", "Z"}), do: :draw
+end
+
+Day2.part1(Load.input())
+Day2.part2(Load.input())
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  @input """
+  A Y
+  B X
+  C Z
+  """
+
+  test "total score of example - part 1" do
+    assert Day2.part1(@input |> String.split("\n")) == 15
+  end
+
+  test "total score of example - part 2" do
+    assert Day2.part2(@input |> String.split("\n")) == 12
+  end
+end
+
+ExUnit.run()
+```
