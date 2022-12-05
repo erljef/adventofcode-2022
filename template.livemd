@@ -2,12 +2,12 @@
 
 ## Description
 
-[](https://adventofcode.com/2022/day/)
+[x](https://adventofcode.com/2022/day/x)
 
 ```elixir
 defmodule Load do
   def input do
-    File.read!("#{__DIR__}/inputs/.txt")
+    File.read!("#{__DIR__}/inputs/x.txt")
     |> String.split("\n")
   end
 end
@@ -15,6 +15,11 @@ end
 
 ```elixir
 defmodule DayX do
+  def part1(input) do
+  end
+
+  def part2(input) do
+  end
 end
 ```
 
@@ -33,4 +38,12 @@ defmodule Test do
 end
 
 ExUnit.run()
+```
+
+```elixir
+DayX.part1(Load.input())
+```
+
+```elixir
+DayX.part2(Load.input())
 ```
