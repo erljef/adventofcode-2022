@@ -1,0 +1,116 @@
+# Advent of code 2022 - Day 5
+
+## Description
+
+[Supply Stacks](https://adventofcode.com/2022/day/5)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/day05.txt")
+  end
+end
+```
+
+```elixir
+defmodule Day5 do
+  def part1(input) do
+    [stack_lines, command_lines] =
+      input
+      |> String.split("\n\n")
+
+    stacks = parse_stacks(stack_lines)
+    commands = parse_commands(command_lines)
+
+    execute_commands(stacks, commands)
+    |> Map.to_list()
+    |> Enum.map(fn {_, col} -> List.last(col) end)
+    |> Enum.join()
+  end
+
+  def parse_stacks(input) do
+    input
+    |> String.split("\n")
+    |> Enum.drop(-1)
+    |> Enum.reverse()
+    |> Enum.map(fn line ->
+      String.graphemes(line)
+      |> Enum.chunk_every(4)
+      |> Enum.map(fn list -> Enum.at(list, 1) end)
+    end)
+    |> transpose()
+    |> Enum.map(fn column -> Enum.filter(column, fn x -> String.trim(x) != "" end) end)
+    |> Enum.with_index()
+    |> Enum.reduce(%{}, fn {col, ix}, stacks -> Map.put(stacks, ix + 1, col) end)
+  end
+
+  def transpose(rows) do
+    rows
+    |> List.zip()
+    |> Enum.map(&Tuple.to_list/1)
+  end
+
+  def parse_commands(input) do
+    input
+    |> String.split("\n")
+    |> Enum.filter(&(&1 != ""))
+    |> Enum.map(fn line ->
+      Regex.run(~r{move (\d+) from (\d+) to (\d+)}, line, capture: :all_but_first)
+    end)
+    |> Enum.map(fn cmd -> Enum.map(cmd, &String.to_integer/1) end)
+    |> Enum.map(fn cmd -> List.to_tuple(cmd) end)
+  end
+
+  def execute_commands(stacks, commands) do
+    commands
+    |> Enum.reduce(stacks, fn {times, from, to}, current ->
+      Enum.reduce(1..times, current, fn _, c -> move(c, from, to) end)
+    end)
+  end
+
+  def move(stacks, from, to) do
+    crate = Map.get(stacks, from) |> List.last()
+
+    stacks
+    |> Map.update!(from, fn col -> Enum.drop(col, -1) end)
+    |> Map.update!(to, fn col -> List.insert_at(col, -1, crate) end)
+  end
+
+  def part2(input) do
+  end
+end
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  @input """
+      [D]    
+  [N] [C]    
+  [Z] [M] [P]
+   1   2   3 
+
+  move 1 from 2 to 1
+  move 3 from 1 to 3
+  move 2 from 2 to 1
+  move 1 from 1 to 2  
+  """
+
+  test "which crates end up on top" do
+    assert Day5.part1(@input) == "CMZ"
+  end
+end
+
+ExUnit.run()
+```
+
+```elixir
+Day5.part1(Load.input())
+```
+
+```elixir
+Day5.part2(Load.input())
+```
