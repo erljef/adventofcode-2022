@@ -1,0 +1,91 @@
+# Advent of code 2022 - Day 4
+
+## Description
+
+[Camp Cleanup](https://adventofcode.com/2022/day/4)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/day04.txt")
+    |> String.split("\n")
+    |> Enum.filter(&(&1 != ""))
+  end
+end
+```
+
+```elixir
+defmodule Day04 do
+  def part1(input) do
+    parse(input)
+    |> Enum.filter(&contains?/1)
+    |> Enum.count()
+  end
+
+  def part2(input) do
+    parse(input)
+    |> Enum.filter(&overlaps?/1)
+    |> Enum.count()
+  end
+
+  def parse(input) do
+    input
+    |> Enum.map(fn line ->
+      Regex.run(~r{(\d+)-(\d+),(\d+)-(\d+)}, line, capture: :all_but_first)
+    end)
+    |> Enum.map(fn [a, b, c, d] ->
+      {{String.to_integer(a), String.to_integer(b)}, {String.to_integer(c), String.to_integer(d)}}
+    end)
+  end
+
+  def contains?({{a1, a2} = fst, {b1, b2} = snd}) do
+    (contains?(fst, b1) && contains?(fst, b2)) ||
+      (contains?(snd, a1) && contains?(snd, a2))
+  end
+
+  def contains?({s, e}, value) do
+    value >= s && value <= e
+  end
+
+  def overlaps?({{a1, a2}, {b1, b2}}) do
+    (a1 <= b1 && a2 >= b1) || (b1 <= a1 && b2 >= a1)
+  end
+end
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  @input """
+         2-4,6-8
+         2-3,4-5
+         5-7,7-9
+         2-8,3-7
+         6-6,4-6
+         2-6,4-8  
+         """
+         |> String.split("\n")
+         |> Enum.filter(&(&1 != ""))
+
+  test "sections that fully contain another" do
+    assert Day04.part1(@input) == 2
+  end
+
+  test "sections that overlap" do
+    assert Day04.part2(@input) == 4
+  end
+end
+
+ExUnit.run()
+```
+
+```elixir
+Day04.part1(Load.input())
+```
+
+```elixir
+Day04.part2(Load.input())
+```
