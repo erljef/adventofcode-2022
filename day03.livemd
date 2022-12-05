@@ -1,0 +1,99 @@
+# Advent of code 2022 - Day 3
+
+## Description
+
+[Rucksack Reorganization](https://adventofcode.com/2022/day/3)
+
+<!-- livebook:{"break_markdown":true} -->
+
+[](https://adventofcode.com/2022/day/)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/day03.txt")
+    |> String.split("\n")
+    |> Enum.filter(&(&1 != ""))
+  end
+end
+```
+
+```elixir
+defmodule Day3 do
+  def part1(input) do
+    input
+    |> Enum.map(&to_rucksack/1)
+    |> Enum.map(&common/1)
+    |> sum_priorities()
+  end
+
+  def part2(input) do
+    input
+    |> Enum.chunk_every(3)
+    |> Enum.map(&common/1)
+    |> sum_priorities()
+  end
+  
+  def to_rucksack(line), do: String.split_at(line, div(String.length(line), 2)) |> Tuple.to_list()
+
+  def common(lists) do
+    lists
+    |> Enum.map(fn part -> part |> String.graphemes() |> MapSet.new() end)
+    |> Enum.reduce(fn item, acc -> MapSet.intersection(item, acc) end)
+    |> MapSet.to_list()
+    |> List.first()
+  end
+
+  def priority(character) do
+    if character > 96 do
+      character - 96
+    else
+      character - 38
+    end
+  end
+
+  def sum_priorities(priorities) do
+    priorities
+    |> Enum.join()
+    |> String.to_charlist()
+    |> Enum.map(&priority/1)
+    |> Enum.sum()
+  end
+end
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  @input """
+         vJrwpWtwJgWrhcsFMMfFFhFp
+         jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+         PmmdzqPrVvPwwTWBwg
+         wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+         ttgJtRGJQctTZtZT
+         CrZsJsPPZsGzwwsLwLmpwMDw
+         """
+         |> String.split("\n")
+
+  test "sum of priorities for common items" do
+    assert Day3.part1(@input) == 157
+  end
+
+  test "sum of priorities for common badges" do
+    assert Day3.part2(@input) == 70
+  end
+end
+
+ExUnit.run()
+```
+
+```elixir
+Day3.part1(Load.input())
+```
+
+```elixir
+Day3.part2(Load.input())
+```
