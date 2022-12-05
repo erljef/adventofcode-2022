@@ -1,0 +1,36 @@
+# Advent of code 2022 - Day x
+
+## Description
+
+[](https://adventofcode.com/2022/day/)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/.txt")
+    |> String.split("\n")
+  end
+end
+```
+
+```elixir
+defmodule DayX do
+end
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  @input """
+         """
+         
+  test "" do
+    assert 1 == 0
+  end
+end
+
+ExUnit.run()
+```
