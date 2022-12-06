@@ -1,0 +1,81 @@
+# Advent of code 2022 - Day 6
+
+## Description
+
+[Tuning Trouble](https://adventofcode.com/2022/day/6)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/day06.txt")
+  end
+end
+```
+
+```elixir
+defmodule Day6 do
+  def part1(input) do
+    find_marker(input, 4)
+  end
+
+  def part2(input) do
+    find_marker(input, 14)
+  end
+
+  def find_marker(input, length) do
+    input
+    |> String.graphemes()
+    |> Enum.reduce_while([], fn c, acc ->
+      next = List.insert_at(acc, -1, c)
+
+      if is_different?(next, length) do
+        {:halt, next}
+      else
+        {:cont, next}
+      end
+    end)
+    |> length()
+  end
+
+  def is_different?(input, count) do
+    input
+    |> Enum.take(-count)
+    |> Enum.uniq()
+    |> length() == count
+  end
+end
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  test "find the marker of length 4 for various inputs" do
+    assert Day6.part1("mjqjpqmgbljsphdztnvjfqwrcgsmlb") == 7
+    assert Day6.part1("bvwbjplbgvbhsrlpgdmjqwftvncz") == 5
+    assert Day6.part1("nppdvjthqldpwncqszvftbrmjlhg") == 6
+    assert Day6.part1("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg") == 10
+    assert Day6.part1("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw") == 11
+  end
+
+  test "find the marker of length 14 for various inputs" do
+    assert Day6.part2("mjqjpqmgbljsphdztnvjfqwrcgsmlb") == 19
+    assert Day6.part2("bvwbjplbgvbhsrlpgdmjqwftvncz") == 23
+    assert Day6.part2("nppdvjthqldpwncqszvftbrmjlhg") == 23
+    assert Day6.part2("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg") == 29
+    assert Day6.part2("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw") == 26
+  end
+end
+
+ExUnit.run()
+```
+
+```elixir
+Day6.part1(Load.input())
+```
+
+```elixir
+Day6.part2(Load.input())
+```
