@@ -15,6 +15,14 @@ end
 ```elixir
 defmodule Day5 do
   def part1(input) do
+    execute(input, &move_separate/2)
+  end
+
+  def part2(input) do
+    execute(input, &move_ordered/2)
+  end
+
+  def execute(input, move_fun) do
     [stack_lines, command_lines] =
       input
       |> String.split("\n\n")
@@ -22,7 +30,7 @@ defmodule Day5 do
     stacks = parse_stacks(stack_lines)
     commands = parse_commands(command_lines)
 
-    execute_commands(stacks, commands)
+    execute_commands(stacks, commands, move_fun)
     |> Map.to_list()
     |> Enum.map(fn {_, col} -> List.last(col) end)
     |> Enum.join()
@@ -61,14 +69,16 @@ defmodule Day5 do
     |> Enum.map(fn cmd -> List.to_tuple(cmd) end)
   end
 
-  def execute_commands(stacks, commands) do
+  def execute_commands(stacks, commands, move_fun) do
     commands
-    |> Enum.reduce(stacks, fn {times, from, to}, current ->
-      Enum.reduce(1..times, current, fn _, c -> move(c, from, to) end)
-    end)
+    |> Enum.reduce(stacks, fn command, current -> move_fun.(current, command) end)
   end
 
-  def move(stacks, from, to) do
+  def move_separate(stacks, {amount, _, _} = command) do
+    Enum.reduce(1..amount, stacks, fn _, c -> move(c, command) end)
+  end
+
+  def move(stacks, {_, from, to}) do
     crate = Map.get(stacks, from) |> List.last()
 
     stacks
@@ -76,7 +86,12 @@ defmodule Day5 do
     |> Map.update!(to, fn col -> List.insert_at(col, -1, crate) end)
   end
 
-  def part2(input) do
+  def move_ordered(stacks, {amount, from, to}) do
+    crates = Map.get(stacks, from) |> Enum.take(-amount)
+
+    stacks
+    |> Map.update!(from, fn col -> Enum.drop(col, -amount) end)
+    |> Map.update!(to, fn col -> List.insert_at(col, -1, crates) |> List.flatten() end)
   end
 end
 ```
@@ -99,8 +114,12 @@ defmodule Test do
   move 1 from 1 to 2  
   """
 
-  test "which crates end up on top" do
+  test "which crates end up on top - part 1" do
     assert Day5.part1(@input) == "CMZ"
+  end
+
+  test "which crates end up on top - part 2" do
+    assert Day5.part2(@input) == "MCD"
   end
 end
 
