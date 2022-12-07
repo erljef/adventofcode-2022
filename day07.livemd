@@ -1,0 +1,163 @@
+# Advent of code 2022 - Day 7
+
+## Description
+
+[No Space Left On Device](https://adventofcode.com/2022/day/7)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/day07.txt")
+    |> String.split("\n")
+    |> Enum.filter(&(&1 != ""))
+  end
+end
+```
+
+```elixir
+defmodule Day7 do
+  def part1(input) do
+    input
+    |> parse_commands
+    |> build_filesystem
+    |> sizes
+    |> Enum.filter(fn {_, size} -> size <= 100_000 end)
+    |> Enum.map(fn {_, size} -> size end)
+    |> Enum.sum()
+  end
+
+  def part2(input) do
+    sizes =
+      input
+      |> parse_commands
+      |> build_filesystem
+      |> sizes
+
+    used = sizes |> Map.new() |> Map.get(["/"])
+    delete_at_least = 30_000_000 - (70_000_000 - used)
+
+    sizes
+    |> Enum.map(fn {_, size} -> size end)
+    |> Enum.filter(&(&1 >= delete_at_least))
+    |> Enum.sort()
+    |> List.first()
+  end
+
+  def parse_commands(input) do
+    input
+    |> Enum.chunk_while(
+      [],
+      fn line, acc ->
+        if acc != [] && String.starts_with?(line, "$") do
+          {:cont, acc |> Enum.reverse(), [line]}
+        else
+          {:cont, [line | acc]}
+        end
+      end,
+      fn acc -> {:cont, acc |> Enum.reverse(), []} end
+    )
+  end
+
+  def build_filesystem(commands) do
+    commands
+    |> Enum.reduce(%{:pwd => []}, fn command, fs -> process_command(fs, command) end)
+  end
+
+  def process_command(fs, [<<"$ cd /">>]), do: Map.put(fs, :pwd, ["/"])
+  def process_command(fs, [<<"$ cd ..">>]), do: Map.update!(fs, :pwd, &Enum.drop(&1, -1))
+
+  def process_command(%{pwd: pwd} = fs, [<<"$ cd ", dir::binary>>]),
+    do: Map.put(fs, :pwd, Enum.concat(pwd, [dir]))
+
+  def process_command(%{pwd: pwd} = fs, [<<"$ ls">> | output]), do: Map.put(fs, pwd, output)
+
+  def sizes(fs) do
+    fs
+    |> Map.drop([:pwd])
+    |> Map.to_list()
+    |> Enum.map(fn {path, content} -> {path, size(fs, path)} end)
+  end
+
+  def size(fs, path) do
+    Map.get(fs, path)
+    |> Enum.reduce(0, fn item, total ->
+      case String.split(item) do
+        ["dir", dir] -> total + size(fs, Enum.concat(path, [dir]))
+        [size, _] -> total + String.to_integer(size)
+      end
+    end)
+  end
+end
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  @input """
+         $ cd /
+         $ ls
+         dir a
+         14848514 b.txt
+         8504156 c.dat
+         dir d
+         $ cd a
+         $ ls
+         dir e
+         29116 f
+         2557 g
+         62596 h.lst
+         $ cd e
+         $ ls
+         584 i
+         $ cd ..
+         $ cd ..
+         $ cd d
+         $ ls
+         4060174 j
+         8033020 d.log
+         5626152 d.ext
+         7214296 k
+         """
+         |> String.split("\n")
+         |> Enum.filter(&(&1 != ""))
+
+  @fs @input |> Day7.parse_commands() |> Day7.build_filesystem()
+
+  test "directory e has size of 584" do
+    assert Day7.size(@fs, ["/", "a", "e"]) == 584
+  end
+
+  test "directory a has size of 94853" do
+    assert Day7.size(@fs, ["/", "a"]) == 94853
+  end
+
+  test "directory d has size of 24933642" do
+    assert Day7.size(@fs, ["/", "d"]) == 24_933_642
+  end
+
+  test "root directory has size of 48381165" do
+    assert Day7.size(@fs, ["/"]) == 48_381_165
+  end
+
+  test "total size of directories larger than 10000 is 95437" do
+    assert Day7.part1(@input) == 95437
+  end
+
+  test "find the size of the smallest deletion that increases free space enough" do
+    assert Day7.part2(@input) == 24_933_642
+  end
+end
+
+ExUnit.run()
+```
+
+```elixir
+Day7.part1(Load.input())
+```
+
+```elixir
+Day7.part2(Load.input())
+```
