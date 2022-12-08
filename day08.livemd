@@ -1,0 +1,149 @@
+# Advent of code 2022 - Day 8
+
+## Description
+
+[Treetop Tree House](https://adventofcode.com/2022/day/8)
+
+```elixir
+defmodule Load do
+  def input do
+    File.read!("#{__DIR__}/inputs/day08.txt")
+    |> String.split("\n")
+    |> Enum.filter(&(&1 != ""))
+  end
+end
+```
+
+```elixir
+defmodule Day8 do
+  def part1(input) do
+    grid = map_input(input)
+
+    grid
+    |> Map.filter(fn location -> visible?(grid, location) end)
+    |> Map.keys()
+    |> length()
+  end
+
+  def part2(input) do
+    grid = map_input(input)
+
+    grid
+    |> Enum.map(fn {l, h} -> trees_to_border(grid, l) |> scenic_score({l, h}) end)
+    |> Enum.max()
+  end
+
+  def map_input(input) do
+    input
+    |> Enum.map(fn line -> String.graphemes(line) |> Enum.map(&String.to_integer/1) end)
+    |> Enum.map(fn row -> Enum.with_index(row) end)
+    |> Enum.with_index()
+    |> List.flatten()
+    |> Enum.reduce(%{}, fn {col, y}, grid ->
+      Enum.reduce(col, grid, fn {height, x}, acc ->
+        Map.put(acc, {x, y}, height)
+      end)
+    end)
+  end
+
+  def trees_to_border(grid, {x, y} = location) do
+    grid
+    |> Map.filter(fn {{x2, y2}, _} -> x2 == x || y2 == y end)
+    |> Map.filter(fn {l2, _height} -> l2 != location end)
+  end
+
+  def visible?(grid, {{loc_x, loc_y}, height}) do
+    grid
+    |> trees_to_border({loc_x, loc_y})
+    |> Map.filter(fn {_, h} -> h >= height end)
+    |> Enum.group_by(fn {{x, y}, _} ->
+      cond do
+        x < loc_x -> :west
+        x > loc_x -> :east
+        y < loc_y -> :north
+        y > loc_y -> :south
+      end
+    end)
+    |> Map.to_list()
+    |> length() < 4
+  end
+
+  def scenic_score(trees, {{loc_x, loc_y}, height}) do
+    directions =
+      trees
+      |> Enum.group_by(fn {{x, y}, _} ->
+        cond do
+          x < loc_x -> :west
+          x > loc_x -> :east
+          y < loc_y -> :north
+          y > loc_y -> :south
+        end
+      end)
+
+    if Map.to_list(directions) |> length() < 4,
+      do: 0,
+      else:
+        directions
+        |> Enum.map(fn {d, t} ->
+          Enum.sort_by(t, fn {{x, y}, _} ->
+            case d do
+              :west -> -x
+              :east -> x
+              :north -> -y
+              :south -> y
+            end
+          end)
+        end)
+        |> Enum.map(fn t -> t |> take_while_inclusive(fn {_l, h} -> h < height end) end)
+        |> Enum.map(fn l -> length(l) end)
+        |> Enum.reduce(1, fn directional_score, score -> directional_score * score end)
+  end
+
+  def take_while_inclusive(list, fun) do
+    Enum.reduce_while(list, [], fn item, acc ->
+      if fun.(item) do
+        {:cont, [item | acc]}
+      else
+        {:halt, [item | acc]}
+      end
+    end)
+    |> Enum.reverse()
+  end
+end
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule Test do
+  use ExUnit.Case, async: true
+
+  @input """
+         30373
+         25512
+         65332
+         33549
+         35390
+         """
+         |> String.split("\n")
+         |> Enum.filter(&(&1 != ""))
+
+  test "how many trees are visible from outside" do
+    assert Day8.part1(@input) == 21
+  end
+
+  test "what is the highest scenic score" do
+    assert Day8.part2(@input) == 8
+  end
+end
+
+ExUnit.run()
+```
+
+```elixir
+Day8.part1(Load.input())
+```
+
+```elixir
+Day8.part2(Load.input())
+```
